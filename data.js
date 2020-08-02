@@ -9645,7 +9645,13 @@ class MarkCache {
     constructor(id, MobLocations) {
         this.id = `cache${id}`;
         this.MobLocations = MobLocations;
-        await this.load();
+        this.cache = {
+            resetTime: null,
+            marked: (new Array(this.MobLocations.length)).fill(false)
+        };
+        this.cache.sTotalCount =this.MobLocations.filter(x=> x.Flags[0]).length;
+        this.cache.sUnmarkedCount = this.MobLocations.filter((x, i) => x.Flags[0] && !this.cache.marked[i]).length;
+        this.load();
     }
 
     async load() {
