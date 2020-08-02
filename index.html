@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <style>
+        .full {
+            width: 100%;
+            height: 100%;
+            background-color: black;
+        }
+
+        .full2 {
+            width: 100%;
+            height: 100%;
+        }
+
+        .full3 {
+            width: 100%;
+            height: 50%;
+        }
+
+        #zoneselectheader {
+            height: 72px;
+        }
+
+        #zonemapheader {
+            height: 46px;
+        }
+
+        #zoneselectmain {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .v-btn-toggle .v-btn {
+            width: 100%;
+            height: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            padding: 0px;
+        }
+
+        .actionButtons {
+            position: absolute;
+            top: 66px;
+            right: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <v-app>
+            <v-app-bar app dark dense id="header" class="primary">
+                <v-toolbar-title class="headline text-uppercase">
+                    <span>{{title}}</span>
+                </v-toolbar-title>
+
+                <template v-slot:extension>
+                    <v-tabs  align-with-title v-model="mms.tab">
+                        <v-tab>エリア選択</v-tab>
+                        <v-tab v-for="item in mms.openedZones" :key="item.NameWithInstance" :class="item.Class">
+                            {{item.NameWithInstance}}
+                            <v-spacer></v-spacer>
+                            <v-icon dark small right @click="removeTab(item)">
+                                mdi-close-circle
+                            </v-icon>
+                        </v-tab>
+                    </v-tabs>
+                </template>
+            </v-app-bar>
+            <v-main>
+                <v-layout class="pa-0 full2">
+                    <div v-show="mms.tab==0" id="zoneselect" class="full2">
+                        <v-container fluid grid-list-md class="py-0 md-0 full2">
+                            <v-layout row wrap class="full2">
+                                <v-flex id="zoneselectheader" class="py-0 full2" xs12>
+                                    <v-switch v-model="mms.showAll" class="py-0" label="全エリア"></v-switch>
+                                </v-flex>
+                                <v-flex xs12 id="zoneselectmain" class="py-0">
+                                    <v-card v-for="region in mms.regions" :key="region.Name">
+                                        <v-layout row wrap>
+                                            <v-flex v-if="mms.showAll" xs12>
+                                                <h3>{{region.Name}}</h3>
+                                            </v-flex>
+                                            <template v-for="(item,i) in region.ZoneInstances">
+                                                <v-flex v-if="mms.showAll || item.Filter" :key="item.ID2" xs6 sm4 md4>
+                                                    <v-card :class="region.Class" class="pa-2" @click="addTab(item)">
+                                                        <v-badge :value="item.Cache.progress" color="green"
+                                                            :content="item.Cache.progress" inline>
+                                                            <span>{{item.NameWithInstance}}</span>
+                                                        </v-badge>
+                                                    </v-card>
+                                                </v-flex>
+                                            </template>
+                                        </v-layout>
+                                    </v-card>
+                                </v-flex>
+                            </v-layout>
+                        </v-container>
+                    </div>
+
+                    <div v-show="mms.tab>0" id="zonemap" class="full">
+                        <v-layout id="zonemapheader" row wrap no-gutters class="full2">
+                            <v-col xs4 v-if="mms.zoneInstance.Type!=2">
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full2 red white--text">{{mms.zoneInstance.Mobs[0].Name}}</v-row>
+                            </v-col>
+                            <v-col xs4 v-else>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 red white--text">{{mms.zoneInstance.Mobs[0].Name}}</v-row>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 blue-grey  white--text">{{mms.zoneInstance.Mobs2[0].Name}}</v-row>
+                            </v-col>
+                            <v-col xs4 v-if="mms.zoneInstance.Type==0">
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full2 yellow black--text">{{mms.zoneInstance.Mobs[1].Name}}</v-row>
+                            </v-col>
+                            <v-col xs4 v-else>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 yellow black--text">{{mms.zoneInstance.Mobs[1].Name}}</v-row>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 green black--text">{{mms.zoneInstance.Mobs[2].Name}}</v-row>
+                            </v-col>
+                            <v-col xs4 v-if="mms.zoneInstance.Type==0">
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full2 blue white--text">{{mms.zoneInstance.Mobs[2].Name}}</v-row>
+                            </v-col>
+                            <v-col xs4 v-else>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 blue white--text">{{mms.zoneInstance.Mobs[3].Name}}</v-row>
+                                <v-row align="center" justify="center" text dark block
+                                    class="ma-0 full3 purple white--text">{{mms.zoneInstance.Mobs[4].Name}}</v-row>
+                            </v-col>
+                        </v-layout>
+                        <canvas id="canvas"></canvas>
+                        <div class="actionButtons">
+                            <v-btn color="red" dark small fab @click="focusMap">
+                                <v-icon>mdi-image-filter-center-focus</v-icon>
+                            </v-btn>
+                            <v-btn color="green" dark small fab @click="toggleInfo">
+                                <v-icon>mdi-information</v-icon>
+                            </v-btn>
+
+                            <v-dialog v-model="confirmation" width="400">
+                                <template v-slot:activator="{ on }">
+                                    <v-btn color="orange" dark small fab @click="confirmation=true">
+                                        <v-icon>mdi-notification-clear-all</v-icon>
+                                    </v-btn>
+                                </template>
+
+                                <v-card>
+                                    <v-card-title class="headline grey lighten-2" primary-title>
+                                        チェック状態の初期化
+                                    </v-card-title>
+
+                                    <v-card-text>
+                                        Sモブ討伐直後などにチェック状態を初期化します。<br />
+                                        Sモブが出現しないポイントにはあらかじめチェックが付きます。<br />
+                                        やり直しはできませんが、本当に進めて良いですか？
+                                    </v-card-text>
+
+                                    <v-divider></v-divider>
+
+                                    <v-card-actions>
+                                        <v-spacer></v-spacer>
+                                        <v-btn color="secondary" text @click="confirmation=false">
+                                            キャンセル
+                                        </v-btn>
+                                        <v-btn color="primary" text @click="reset()">
+                                            リセットする
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </v-dialog>
+
+
+                        </div>
+
+                    </div>
+
+                </v-layout>
+            </v-main>
+            <v-footer app id="footer" class="primary darken">
+                <v-layout justify-center row wrap>
+                    <v-flex primary text-center white--text xs12>
+                        <small>記載されている会社名・製品名・システム名などは、各社の商標、または登録商標です。</small>
+                    </v-flex>
+                </v-layout>
+            </v-footer>
+
+        </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="utils.js"></script>
+    <script src="data.js"></script>
+    <script>
+
+
+
+
+        new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data: {
+                mms: new MobMapService(),
+                mapCanvas: null,
+                dialog: false,
+                confirmation: false
+            },
+            computed: {
+                title() {
+                    return this.tab == 0 ? 
+                        'エリア選択' : this.tab-1 < this.mms.openedZones.length ?
+                        (this.mms.openedZones[this.tab - 1]).NameWithInstanceProgress : '';
+                },
+                tab() {
+                    return this.mms.tab;
+                },
+                tabCount() {
+                    return this.mms.openedZones.length
+                }
+            },
+            mounted: function () {
+                document.body.style.mozUserSelect = document.body.style.webkitUserSelect = document.body.style.userSelect = 'none';
+                this.mapCanvas = new MobMapCanvas(document.getElementById('canvas'));
+                window.addEventListener("resize", this.onResize);
+                this.$nextTick(() => {
+                    const elHtml = document.getElementsByTagName('html')[0]
+                    elHtml.style["overflow-y"] = 'hidden'
+                    this.onResize()
+                })
+
+            },
+            beforeDestroy() {
+                window.removeEventListener("resize", this.onResize);
+            },
+            methods: {
+                addTab(zone) {
+                    this.mms.openZone(zone);
+                },
+                removeTab(zone) {
+                    this.mms.closeZone(zone);
+                },
+                onResize() {
+                    const width = window.innerWidth
+                    const height = window.innerHeight
+
+                    if (this.tab > 0) {
+                        const offsetHeightHeader = document.getElementById('header').offsetHeight
+                        const offsetHeightZoneMapHeader = document.getElementById('zonemapheader').offsetHeight
+                        const offsetHeightFooter = document.getElementById('footer').offsetHeight
+                        const offsetHeights = offsetHeightHeader + offsetHeightZoneMapHeader + offsetHeightFooter
+                        console.log('onResize', height, offsetHeights, offsetHeightHeader, offsetHeightZoneMapHeader, offsetHeightFooter);
+                        this.mapCanvas.setSize(width, height - offsetHeights + 1)
+                    }
+                    else {
+                        const offsetHeightHeader = document.getElementById('header').offsetHeight
+                        const offsetHeightZoneStatusHeader = document.getElementById('zoneselectheader').offsetHeight
+                        const offsetHeightFooter = document.getElementById('footer').offsetHeight
+                        const offsetHeights = offsetHeightHeader + offsetHeightZoneStatusHeader + offsetHeightFooter
+                        console.log('onResize', height, offsetHeights, offsetHeightHeader, offsetHeightZoneStatusHeader, offsetHeightFooter);
+                        document.getElementById('zoneselectmain').style.height = `${height - offsetHeights + 1}px`
+                    }
+
+
+                },
+                focusMap() {
+                    this.mapCanvas.focusRegion()
+                    this.mapCanvas.draw()
+                },
+                toggleInfo() {
+                    this.mapCanvas.showInfo = !this.mapCanvas.showInfo
+                    this.mapCanvas.draw()
+                },
+                reset() {
+                    this.confirmation = false
+                    this.mms.zoneInstance.Cache.reset()
+                    this.mapCanvas.draw()
+                },
+                forceAreaChange() {
+                    console.log(this.tab)
+                    if (this.tab > 0) {
+                        const newZoneInstance = this.mms.openedZones[this.tab - 1];
+                        if (this.mms.zoneInstance.ID2 != newZoneInstance.ID2) {
+                            this.mms.zoneInstance = newZoneInstance;
+                            this.mapCanvas.setArea(newZoneInstance);
+                        }
+                    }
+                    this.$nextTick(() => {
+                        this.onResize()
+                    })
+                }
+
+            },
+            watch: {
+                tab() {
+                    this.forceAreaChange()
+                },
+                tabCount() {
+                    this.forceAreaChange()
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

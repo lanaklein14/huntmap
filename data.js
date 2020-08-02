@@ -9522,7 +9522,7 @@ const zones = [
 ];
 
 class CacheService {
-    static setProperty(key, value) {
+/*    static setProperty(key, value) {
         localStorage.setItem(key, value);
     }
     static getProperty(key, defaultValue = null) {
@@ -9534,6 +9534,27 @@ class CacheService {
             return rtn;
         }
     }
+*/
+    static async setProperty(key, value) {
+        //コード.js内のgetSheetB()を実行
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler((result) => resolve(result))
+            .withFailureHandler((error) => resolve(error))
+            .setScriptProperty(key, value);
+        });
+    }
+
+    static async getProperty(key) {
+        //コード.js内のgetSheetB()を実行
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler((result) => resolve(result))
+            .withFailureHandler((error) => resolve(error))
+            .getScriptProperty(key);
+        });
+    }
+
     static setClientProperty(key, value) {
         localStorage.setItem(key, value);
     }
@@ -9551,8 +9572,8 @@ class CacheService {
 class MobZone {
     constructor(json) {
         Object.assign(this, json);
-        const tmp = CacheService.getProperty(`Ins${this.ID}`);
-        this._InsCount = isNaN(parseInt(tmp, 10)) ? 1 : parseInt(tmp, 10);
+//        const tmp = await CacheService.getProperty(`Ins${this.ID}`);
+//        this._InsCount = isNaN(parseInt(tmp, 10)) ? 1 : parseInt(tmp, 10);
         this._InsCount = this.Instance ? this.Instance : 1; // 応急処置
     }
 
@@ -9561,7 +9582,7 @@ class MobZone {
     }
 
     set InsCount(count) {
-        CacheService.setProperty(`Ins${this.ID}`, count.toString());
+        //CacheService.setProperty(`Ins${this.ID}`, count.toString());
         this._InsCount = count;
     }
 
@@ -9627,8 +9648,8 @@ class MarkCache {
         this.load();
     }
 
-    load() {
-        this.cache = JSON.parse(CacheService.getProperty(this.id));
+    async load() {
+        this.cache = JSON.parse(await CacheService.getProperty(this.id));
         if (this.cache == null || this.cache.marked == null || this.cache.marked.length != this.MobLocations.length) {
             this.cache = {
                 resetTime: null,
@@ -9639,8 +9660,8 @@ class MarkCache {
         this.cache.sUnmarkedCount = this.MobLocations.filter((x, i) => x.Flags[0] && !this.cache.marked[i]).length;
     }
 
-    set(index, val) {
-        this.load();
+    async set(index, val) {
+        await this.load();
         this.cache.marked[index] = val;
         this.cache.sUnmarkedCount = this.MobLocations.filter((x, i) => x.Flags[0] && !this.cache.marked[i]).length;
         if (this.cache.sUnmarkedCount === this.cache.sTotalCount) {
@@ -9651,19 +9672,19 @@ class MarkCache {
                 this.cache.resetTime = new Date();
             }
         }
-        CacheService.setProperty(this.id, JSON.stringify(this.cache));
+        await CacheService.setProperty(this.id, JSON.stringify(this.cache));
     }
 
     get(index) {
         return this.cache.marked[index];
     }
 
-    toggle(index) {
+    async toggle(index) {
         const tempVal = !(this.get(index));
-        this.set(index, tempVal);
+        await this.set(index, tempVal);
     }
 
-    reset() {
+    async reset() {
         this.cache.resetTime = null
         this.cache.marked = (new Array(this.MobLocations.length)).fill(false)
         this.MobLocations.forEach((v, i) => {
@@ -9676,7 +9697,7 @@ class MarkCache {
         else {
             this.cache.resetTime = new Date();
         }
-        CacheService.setProperty(this.id, JSON.stringify(this.cache));
+        await CacheService.setProperty(this.id, JSON.stringify(this.cache));
     }
 
     get progress() {
