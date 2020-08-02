@@ -9645,7 +9645,7 @@ class MarkCache {
     constructor(id, MobLocations) {
         this.id = `cache${id}`;
         this.MobLocations = MobLocations;
-        this.load();
+        await this.load();
     }
 
     async load() {
